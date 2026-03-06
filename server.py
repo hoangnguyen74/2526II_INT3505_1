@@ -10,23 +10,23 @@ cameras = [
 
 def authenticate():
     token = request.headers.get("Authorization")
-
-    if token != "Bearer secret123":
-        return False
-    return True
+    return token == "Bearer secret123"
 
 
 @app.route("/cameras", methods=["GET"])
 def get_cameras():
 
     if not authenticate():
-        return jsonify({"error": "Unauthorized"}), 401
+        return jsonify({
+            "status": "error",
+            "message": "Unauthorized"
+        }), 401
 
     response = make_response(jsonify({
+        "status": "success",
         "data": cameras
     }))
 
-    # cache 60 seconds
     response.headers["Cache-Control"] = "public, max-age=60"
 
     return response
@@ -36,7 +36,10 @@ def get_cameras():
 def create_camera():
 
     if not authenticate():
-        return jsonify({"error": "Unauthorized"}), 401
+        return jsonify({
+            "status": "error",
+            "message": "Unauthorized"
+        }), 401
 
     data = request.json
 
@@ -47,7 +50,10 @@ def create_camera():
 
     cameras.append(new_camera)
 
-    return jsonify(new_camera), 201
+    return jsonify({
+        "status": "success",
+        "data": new_camera
+    }), 201
 
 
 if __name__ == "__main__":
