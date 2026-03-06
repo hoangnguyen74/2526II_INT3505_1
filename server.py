@@ -1,18 +1,45 @@
-from flask import Flask, jsonify, request
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
+# fake database
 cameras = [
     {"id": 1, "name": "Camera Gate"},
     {"id": 2, "name": "Camera Lobby"}
 ]
 
+
+# middleware kiểm tra token
+def authenticate():
+    token = request.headers.get("Authorization")
+
+    if token != "Bearer secret123":
+        return False
+    return True
+
+
+# ========================
+# GET cameras
+# ========================
 @app.route("/cameras", methods=["GET"])
 def get_cameras():
-    return jsonify(cameras)
 
+    if not authenticate():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    return jsonify({
+        "data": cameras
+    })
+
+
+# ========================
+# POST camera
+# ========================
 @app.route("/cameras", methods=["POST"])
 def create_camera():
+
+    if not authenticate():
+        return jsonify({"error": "Unauthorized"}), 401
 
     data = request.json
 
