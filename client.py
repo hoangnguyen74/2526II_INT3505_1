@@ -2,9 +2,16 @@ import requests
 
 SERVER_URL = "http://127.0.0.1:5000"
 
+headers = {
+    "Authorization": "Bearer secret123"
+}
+
 
 # GET cameras
-response = requests.get(f"{SERVER_URL}/cameras")
+response = requests.get(
+    f"{SERVER_URL}/cameras",
+    headers=headers
+)
 
 print("GET cameras:")
 print(response.json())
@@ -15,7 +22,11 @@ data = {
     "name": "Camera Parking"
 }
 
-response = requests.post(f"{SERVER_URL}/cameras", json=data)
+response = requests.post(
+    f"{SERVER_URL}/cameras",
+    json=data,
+    headers=headers
+)
 
 print("\nPOST camera:")
 print(response.json())
