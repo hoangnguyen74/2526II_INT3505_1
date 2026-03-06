@@ -1,15 +1,13 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 
 app = Flask(__name__)
 
-# fake database
 cameras = [
     {"id": 1, "name": "Camera Gate"},
     {"id": 2, "name": "Camera Lobby"}
 ]
 
 
-# middleware kiểm tra token
 def authenticate():
     token = request.headers.get("Authorization")
 
@@ -18,23 +16,22 @@ def authenticate():
     return True
 
 
-# ========================
-# GET cameras
-# ========================
 @app.route("/cameras", methods=["GET"])
 def get_cameras():
 
     if not authenticate():
         return jsonify({"error": "Unauthorized"}), 401
 
-    return jsonify({
+    response = make_response(jsonify({
         "data": cameras
-    })
+    }))
+
+    # cache 60 seconds
+    response.headers["Cache-Control"] = "public, max-age=60"
+
+    return response
 
 
-# ========================
-# POST camera
-# ========================
 @app.route("/cameras", methods=["POST"])
 def create_camera():
 
