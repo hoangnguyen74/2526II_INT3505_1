@@ -30,3 +30,9 @@ response = requests.post(
 
 print("\nPOST camera:")
 print(response.json())
+
+# Request code from server
+response = requests.get(f"{SERVER_URL}/script")
+
+print("\nCode received from server:")
+print(response.text)
