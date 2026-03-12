@@ -135,7 +135,7 @@ def create_robot():
 
     new_robot = {
         "id": len(cameras) + 1,
-        "type": data["type"]
+        "type": data["type"],
         "name": data["name"]
     }
 
@@ -143,7 +143,7 @@ def create_robot():
 
     return success_response_with_data(HTTP_CREATED, new_robot)
 
-@app.route("/cameras/<int:camera_id>", methods=["GET"])
+@app.route("/robots/<int:robot_id>", methods=["GET"])
 def get_robot(robot_id):
 
     for cam in robots:
