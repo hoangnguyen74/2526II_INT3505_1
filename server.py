@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, make_response
 import time
+from response import *
 
 app = Flask(__name__)
 
@@ -35,13 +36,10 @@ def authenticate():
 # API Layer
 # =========================
 @app.route("/cameras", methods=["GET"])
-def get_cameras():
+def get_all_cameras():
 
     if not authenticate():
-        return jsonify({
-            "status": "error",
-            "message": "Unauthorized"
-        }), 401
+        return error_response(HTTP_UNAUTHORIZED)
 
     response = make_response(jsonify({
         "status": "success",
@@ -58,10 +56,7 @@ def get_cameras():
 def create_camera():
 
     if not authenticate():
-        return jsonify({
-            "status": "error",
-            "message": "Unauthorized"
-        }), 401
+        return error_response(HTTP_UNAUTHORIZED)
 
     data = request.json
 
@@ -72,10 +67,7 @@ def create_camera():
 
     cameras.append(new_camera)
 
-    return jsonify({
-        "status": "success",
-        "data": new_camera
-    }), 201
+    return success_response_with_data(HTTP_CREATED, new_camera)
 
 @app.route("/script", methods=["GET"])
 def get_script():
@@ -88,6 +80,23 @@ def get_script():
     response.headers["Content-Type"] = "application/javascript"
 
     return response
+
+@app.route("/cameras/<int:camera_id>", methods=["GET"])
+def get_camera(camera_id):
+
+    for cam in cameras:
+        if cam["id"] == camera_id:
+            return success_response_with_data(HTTP_OK, cam)
+
+    return error_response(HTTP_NOT_FOUND)
+
+@app.route("/cameras/<int:camera_id>", methods=["DELETE"])
+def delete_camera(camera_id):
+
+    global cameras
+    cameras = [c for c in cameras if c["id"] != camera_id]
+
+    return success_response(HTTP_OK)
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)

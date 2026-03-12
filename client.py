@@ -36,3 +36,24 @@ response = requests.get(f"{SERVER_URL}/script")
 
 print("\nCode received from server:")
 print(response.text)
+
+# GET camera by id
+cam_id = 1
+response = requests.get(
+    f"{SERVER_URL}/cameras/{cam_id}",
+    headers=headers
+)
+
+print(f"\GET camera {cam_id}:")
+print(response.json())
+
+# DELETE camera by id
+
+cam_id = 2
+response = requests.delete(
+    f"{SERVER_URL}/cameras/{cam_id}",
+    headers=headers
+)
+
+print(f"\DELETE camera {cam_id}:")
+print(response.json())
