@@ -1,0 +1,277 @@
+openapi: 3.0.3
+info:
+  title: Book Management API
+  description: |
+    API quản lý sách cho thư viện.
+    Hỗ trợ CRUD operations cho resource Book.
+  version: "1.0.0"
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+tags:
+  - name: Books
+    description: Quản lý sách
+
+paths:
+  # ============================================
+  # /books — Collection endpoint
+  # ============================================
+  /books:
+    get:
+      summary: Lấy danh sách sách
+      description: Trả về danh sách tất cả sách trong thư viện. Có thể lọc theo thể loại.
+      operationId: getBooks
+      tags:
+        - Books
+      parameters:
+        - name: genre
+          in: query
+          required: false
+          description: Lọc sách theo thể loại
+          schema:
+            type: string
+          example: fiction
+      responses:
+        '200':
+          description: Danh sách sách
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+              example:
+                - id: 1
+                  title: "Dế Mèn Phiêu Lưu Ký"
+                  author: "Tô Hoài"
+                  genre: "fiction"
+                  year: 1941
+                - id: 2
+                  title: "Số Đỏ"
+                  author: "Vũ Trọng Phụng"
+                  genre: "fiction"
+                  year: 1936
+
+    post:
+      summary: Thêm sách mới
+      description: Tạo một cuốn sách mới trong thư viện
+      operationId: createBook
+      tags:
+        - Books
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookCreate'
+            example:
+              title: "Dế Mèn Phiêu Lưu Ký"
+              author: "Tô Hoài"
+              genre: "fiction"
+              year: 1941
+      responses:
+        '201':
+          description: Tạo sách thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+
+  # ============================================
+  # /books/{id} — Item endpoint
+  # ============================================
+  /books/{id}:
+    get:
+      summary: Lấy chi tiết sách
+      description: Trả về thông tin chi tiết của một cuốn sách theo ID
+      operationId: getBookById
+      tags:
+        - Books
+      parameters:
+        - $ref: '#/components/parameters/BookId'
+      responses:
+        '200':
+          description: Thông tin sách
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '404':
+          description: Không tìm thấy sách
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Book not found"
+
+    put:
+      summary: Cập nhật thông tin sách
+      description: Cập nhật toàn bộ thông tin của một cuốn sách
+      operationId: updateBook
+      tags:
+        - Books
+      parameters:
+        - $ref: '#/components/parameters/BookId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookCreate'
+            example:
+              title: "Dế Mèn Phiêu Lưu Ký (Tái bản)"
+              author: "Tô Hoài"
+              genre: "fiction"
+              year: 1941
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '404':
+          description: Không tìm thấy sách
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+
+    delete:
+      summary: Xóa sách
+      description: Xóa một cuốn sách khỏi thư viện
+      operationId: deleteBook
+      tags:
+        - Books
+      parameters:
+        - $ref: '#/components/parameters/BookId'
+      responses:
+        '200':
+          description: Xóa thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Book deleted successfully"
+        '404':
+          description: Không tìm thấy sách
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+# ============================================
+# Components — Schemas & Parameters tái sử dụng
+# ============================================
+components:
+  parameters:
+    BookId:
+      name: id
+      in: path
+      required: true
+      description: ID duy nhất của cuốn sách
+      schema:
+        type: integer
+      example: 1
+
+  schemas:
+    Book:
+      type: object
+      description: Thông tin đầy đủ của một cuốn sách (bao gồm ID)
+      properties:
+        id:
+          type: integer
+          description: ID tự sinh bởi server
+          example: 1
+        title:
+          type: string
+          description: Tên sách
+          example: "Dế Mèn Phiêu Lưu Ký"
+        author:
+          type: string
+          description: Tên tác giả
+          example: "Tô Hoài"
+        genre:
+          type: string
+          description: Thể loại sách
+          example: "fiction"
+        year:
+          type: integer
+          description: Năm xuất bản
+          example: 1941
+      required:
+        - id
+        - title
+        - author
+
+    BookCreate:
+      type: object
+      description: Dữ liệu để tạo hoặc cập nhật sách (không bao gồm ID)
+      properties:
+        title:
+          type: string
+          description: Tên sách
+          example: "Dế Mèn Phiêu Lưu Ký"
+        author:
+          type: string
+          description: Tên tác giả
+          example: "Tô Hoài"
+        genre:
+          type: string
+          description: Thể loại sách
+          example: "fiction"
+        year:
+          type: integer
+          description: Năm xuất bản
+          example: 1941
+      required:
+        - title
+        - author
+
+    ErrorResponse:
+      type: object
+      description: Response trả về khi có lỗi
+      properties:
+        detail:
+          type: string
+          description: Mô tả lỗi
+          example: "Book not found"
+
+    HTTPValidationError:
+      type: object
+      description: Lỗi validation từ FastAPI
+      properties:
+        detail:
+          type: array
+          items:
+            type: object
+            properties:
+              loc:
+                type: array
+                items:
+                  type: string
+              msg:
+                type: string
+              type:
+                type: string
