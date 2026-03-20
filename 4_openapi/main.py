@@ -221,3 +221,5 @@ def delete_book(id: int):
             books_db.pop(i)
             return {"message": "Book deleted successfully"}
     raise HTTPException(status_code=404, detail="Book not found")
+
+# python -m uvicorn main:app --reload
