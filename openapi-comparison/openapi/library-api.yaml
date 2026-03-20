@@ -1,0 +1,188 @@
+openapi: 3.0.3
+info:
+  title: Library Management API
+  description: API quản lý thư viện — Demo OpenAPI format
+  version: "1.0.0"
+  contact:
+    name: Demo Support
+    email: demo@example.com
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+
+tags:
+  - name: Books
+    description: Quản lý sách trong thư viện
+
+paths:
+  /books:
+    get:
+      summary: Lấy danh sách sách
+      operationId: listBooks
+      tags: [Books]
+      parameters:
+        - name: genre
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Lọc theo thể loại
+        - name: author
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Lọc theo tác giả
+      responses:
+        '200':
+          description: Danh sách sách
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+              example:
+                - id: 1
+                  title: "Dế Mèn Phiêu Lưu Ký"
+                  author: "Tô Hoài"
+                  genre: "fiction"
+                  year: 1941
+                  available: true
+
+    post:
+      summary: Thêm sách mới
+      operationId: createBook
+      tags: [Books]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookCreate'
+      responses:
+        '201':
+          description: Tạo thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '422':
+          description: Dữ liệu không hợp lệ
+
+  /books/{id}:
+    get:
+      summary: Lấy chi tiết sách
+      operationId: getBook
+      tags: [Books]
+      parameters:
+        - $ref: '#/components/parameters/BookId'
+      responses:
+        '200':
+          description: Thông tin sách
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '404':
+          description: Không tìm thấy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Cập nhật sách
+      operationId: updateBook
+      tags: [Books]
+      parameters:
+        - $ref: '#/components/parameters/BookId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookCreate'
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '404':
+          description: Không tìm thấy
+
+    delete:
+      summary: Xóa sách
+      operationId: deleteBook
+      tags: [Books]
+      parameters:
+        - $ref: '#/components/parameters/BookId'
+      responses:
+        '200':
+          description: Xóa thành công
+          content:
+            application/json:
+              example:
+                message: "Book deleted successfully"
+        '404':
+          description: Không tìm thấy
+
+components:
+  parameters:
+    BookId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: ID của sách
+
+  schemas:
+    Book:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "Dế Mèn Phiêu Lưu Ký"
+        author:
+          type: string
+          example: "Tô Hoài"
+        genre:
+          type: string
+          example: "fiction"
+        year:
+          type: integer
+          example: 1941
+        available:
+          type: boolean
+          example: true
+      required: [id, title, author]
+
+    BookCreate:
+      type: object
+      properties:
+        title:
+          type: string
+        author:
+          type: string
+        genre:
+          type: string
+        year:
+          type: integer
+        available:
+          type: boolean
+          default: true
+      required: [title, author]
+
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+          example: "Book not found"

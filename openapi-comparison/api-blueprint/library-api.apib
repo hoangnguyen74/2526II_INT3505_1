@@ -1,0 +1,200 @@
+FORMAT: 1A
+
+# Library Management API
+
+API quản lý thư viện — Demo API Blueprint format.
+
+API Blueprint sử dụng Markdown để mô tả API, rất dễ đọc và viết.
+
+## Group Books
+
+Quản lý sách trong thư viện.
+
+## Books Collection [/books{?genre,author}]
+
+### Lấy danh sách sách [GET]
+
+Trả về danh sách tất cả sách. Có thể lọc theo thể loại hoặc tác giả.
+
++ Parameters
+    + genre (string, optional) - Lọc theo thể loại
+        + Example: `fiction`
+    + author (string, optional) - Lọc theo tác giả
+        + Example: `Tô Hoài`
+
++ Response 200 (application/json)
+
+    + Attributes (array[Book])
+
+    + Body
+
+            [
+                {
+                    "id": 1,
+                    "title": "Dế Mèn Phiêu Lưu Ký",
+                    "author": "Tô Hoài",
+                    "genre": "fiction",
+                    "year": 1941,
+                    "available": true
+                },
+                {
+                    "id": 2,
+                    "title": "Số Đỏ",
+                    "author": "Vũ Trọng Phụng",
+                    "genre": "fiction",
+                    "year": 1936,
+                    "available": true
+                }
+            ]
+
+### Thêm sách mới [POST]
+
+Tạo một cuốn sách mới trong thư viện.
+
++ Request (application/json)
+
+    + Attributes (BookCreate)
+
+    + Body
+
+            {
+                "title": "Clean Code",
+                "author": "Robert C. Martin",
+                "genre": "technology",
+                "year": 2008,
+                "available": true
+            }
+
++ Response 201 (application/json)
+
+    + Attributes (Book)
+
+    + Body
+
+            {
+                "id": 3,
+                "title": "Clean Code",
+                "author": "Robert C. Martin",
+                "genre": "technology",
+                "year": 2008,
+                "available": true
+            }
+
++ Response 422 (application/json)
+
+    + Body
+
+            {
+                "detail": "Validation error"
+            }
+
+## Book Resource [/books/{id}]
+
++ Parameters
+    + id (number, required) - ID của sách
+        + Example: `1`
+
+### Lấy chi tiết sách [GET]
+
+Trả về thông tin chi tiết của một cuốn sách.
+
++ Response 200 (application/json)
+
+    + Attributes (Book)
+
+    + Body
+
+            {
+                "id": 1,
+                "title": "Dế Mèn Phiêu Lưu Ký",
+                "author": "Tô Hoài",
+                "genre": "fiction",
+                "year": 1941,
+                "available": true
+            }
+
++ Response 404 (application/json)
+
+    + Body
+
+            {
+                "detail": "Book not found"
+            }
+
+### Cập nhật sách [PUT]
+
+Cập nhật toàn bộ thông tin sách.
+
++ Request (application/json)
+
+    + Attributes (BookCreate)
+
+    + Body
+
+            {
+                "title": "Dế Mèn Phiêu Lưu Ký (Tái bản)",
+                "author": "Tô Hoài",
+                "genre": "fiction",
+                "year": 1941,
+                "available": true
+            }
+
++ Response 200 (application/json)
+
+    + Attributes (Book)
+
+    + Body
+
+            {
+                "id": 1,
+                "title": "Dế Mèn Phiêu Lưu Ký (Tái bản)",
+                "author": "Tô Hoài",
+                "genre": "fiction",
+                "year": 1941,
+                "available": true
+            }
+
++ Response 404 (application/json)
+
+    + Body
+
+            {
+                "detail": "Book not found"
+            }
+
+### Xóa sách [DELETE]
+
+Xóa một cuốn sách khỏi thư viện.
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "message": "Book deleted successfully"
+            }
+
++ Response 404 (application/json)
+
+    + Body
+
+            {
+                "detail": "Book not found"
+            }
+
+# Data Structures
+
+## Book (object)
++ id: 1 (number, required) - ID tự sinh
++ title: `Dế Mèn Phiêu Lưu Ký` (string, required) - Tên sách
++ author: `Tô Hoài` (string, required) - Tác giả
++ genre: `fiction` (string, optional) - Thể loại
++ year: 1941 (number, optional) - Năm xuất bản
++ available: true (boolean, optional) - Còn sẵn không
+
+## BookCreate (object)
++ title: `Dế Mèn Phiêu Lưu Ký` (string, required) - Tên sách
++ author: `Tô Hoài` (string, required) - Tác giả
++ genre: `fiction` (string, optional) - Thể loại
++ year: 1941 (number, optional) - Năm xuất bản
++ available: true (boolean, optional) - Còn sẵn không

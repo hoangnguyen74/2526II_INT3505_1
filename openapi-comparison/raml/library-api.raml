@@ -1,0 +1,201 @@
+#%RAML 1.0
+title: Library Management API
+description: API quản lý thư viện — Demo RAML format
+version: v1
+baseUri: http://localhost:8000
+mediaType: application/json
+
+# ============================================
+# Types (tương tự components/schemas)
+# ============================================
+types:
+  Book:
+    description: Thông tin đầy đủ của sách
+    type: object
+    properties:
+      id:
+        type: integer
+        description: ID tự sinh
+        example: 1
+      title:
+        type: string
+        description: Tên sách
+        example: "Dế Mèn Phiêu Lưu Ký"
+      author:
+        type: string
+        description: Tác giả
+        example: "Tô Hoài"
+      genre?:
+        type: string
+        description: Thể loại (optional)
+        example: "fiction"
+      year?:
+        type: integer
+        description: Năm xuất bản (optional)
+        example: 1941
+      available?:
+        type: boolean
+        description: Còn sẵn không
+        default: true
+        example: true
+
+  BookCreate:
+    description: Dữ liệu tạo/cập nhật sách
+    type: object
+    properties:
+      title:
+        type: string
+        example: "Dế Mèn Phiêu Lưu Ký"
+      author:
+        type: string
+        example: "Tô Hoài"
+      genre?:
+        type: string
+        example: "fiction"
+      year?:
+        type: integer
+        example: 1941
+      available?:
+        type: boolean
+        default: true
+
+  Error:
+    description: Response lỗi
+    type: object
+    properties:
+      detail:
+        type: string
+        example: "Book not found"
+
+# ============================================
+# Traits (tái sử dụng behavior)
+# ============================================
+traits:
+  hasNotFound:
+    responses:
+      404:
+        body:
+          application/json:
+            type: Error
+            example:
+              detail: "Book not found"
+
+# ============================================
+# Resources (endpoints)
+# ============================================
+/books:
+  displayName: Books Collection
+  description: Quản lý danh sách sách
+
+  get:
+    displayName: Lấy danh sách sách
+    description: Trả về tất cả sách, hỗ trợ filter
+    queryParameters:
+      genre?:
+        type: string
+        description: Lọc theo thể loại
+        example: "fiction"
+      author?:
+        type: string
+        description: Lọc theo tác giả
+        example: "Tô Hoài"
+    responses:
+      200:
+        body:
+          application/json:
+            type: Book[]
+            example:
+              - id: 1
+                title: "Dế Mèn Phiêu Lưu Ký"
+                author: "Tô Hoài"
+                genre: "fiction"
+                year: 1941
+                available: true
+              - id: 2
+                title: "Số Đỏ"
+                author: "Vũ Trọng Phụng"
+                genre: "fiction"
+                year: 1936
+                available: true
+
+  post:
+    displayName: Thêm sách mới
+    description: Tạo một cuốn sách mới
+    body:
+      application/json:
+        type: BookCreate
+        example:
+          title: "Clean Code"
+          author: "Robert C. Martin"
+          genre: "technology"
+          year: 2008
+    responses:
+      201:
+        body:
+          application/json:
+            type: Book
+            example:
+              id: 3
+              title: "Clean Code"
+              author: "Robert C. Martin"
+              genre: "technology"
+              year: 2008
+              available: true
+      422:
+        body:
+          application/json:
+            example:
+              detail: "Validation error"
+
+  /{id}:
+    displayName: Book Resource
+    description: Thao tác với một cuốn sách cụ thể
+
+    uriParameters:
+      id:
+        type: integer
+        description: ID của sách
+        example: 1
+
+    get:
+      displayName: Lấy chi tiết sách
+      is: [hasNotFound]
+      responses:
+        200:
+          body:
+            application/json:
+              type: Book
+              example:
+                id: 1
+                title: "Dế Mèn Phiêu Lưu Ký"
+                author: "Tô Hoài"
+                genre: "fiction"
+                year: 1941
+                available: true
+
+    put:
+      displayName: Cập nhật sách
+      is: [hasNotFound]
+      body:
+        application/json:
+          type: BookCreate
+          example:
+            title: "Dế Mèn Phiêu Lưu Ký (Tái bản)"
+            author: "Tô Hoài"
+            genre: "fiction"
+            year: 1941
+      responses:
+        200:
+          body:
+            application/json:
+              type: Book
+
+    delete:
+      displayName: Xóa sách
+      is: [hasNotFound]
+      responses:
+        200:
+          body:
+            application/json:
+              example:
+                message: "Book deleted successfully"
