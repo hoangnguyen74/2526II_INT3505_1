@@ -1,0 +1,43 @@
+{
+  "typeapi": "1.0",
+  "operations": {
+    "getBooks": {
+      "description": "Returns a list of books",
+      "method": "GET",
+      "path": "/books",
+      "arguments": {},
+      "return": {
+        "schema": "BookCollection"
+      }
+    },
+    "createBook": {
+      "description": "Creates a new book",
+      "method": "POST",
+      "path": "/books",
+      "arguments": {
+        "payload": {
+          "in": "body",
+          "schema": "Book"
+        }
+      },
+      "return": {
+        "schema": "Book"
+      }
+    }
+  },
+  "definitions": {
+    "Book": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer" },
+        "title": { "type": "string" },
+        "author": { "type": "string" },
+        "genre": { "type": "string" }
+      }
+    },
+    "BookCollection": {
+      "type": "array",
+      "items": { "$ref": "Book" }
+    }
+  }
+}
