@@ -6,11 +6,12 @@ New-Item -ItemType Directory -Force -Path generated | Out-Null
 
 # 1. Convert to OpenAPI de gen code
 Write-Host "`n[1] Converting RAML to OpenAPI..." -ForegroundColor Yellow
-npx raml2oas library-api.raml > library-api.yaml
+# Su dung npx -y ket hop cong cu chinh chu cua Mulesoft de tranh loi treo
+npx -y oas-raml-converter --from RAML --to OAS20 ./library-api.raml ./library-api.yaml
 
 # 2. Generate Python client
 Write-Host "`n[2] Generating Python client..." -ForegroundColor Yellow
-npx @openapitools/openapi-generator-cli generate `
+npx -y @openapitools/openapi-generator-cli generate `
   -i library-api.yaml `
   -g python `
   -o generated/python-client `
@@ -18,7 +19,7 @@ npx @openapitools/openapi-generator-cli generate `
 
 # 3. Generate Python FastAPI Server
 Write-Host "`n[3] Generating Python FastAPI server..." -ForegroundColor Yellow
-npx @openapitools/openapi-generator-cli generate `
+npx -y @openapitools/openapi-generator-cli generate `
   -i library-api.yaml `
   -g python-fastapi `
   -o generated/python-fastapi `

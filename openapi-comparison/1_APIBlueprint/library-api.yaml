@@ -1,0 +1,570 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Library Management API",
+        "version": "",
+        "description": "API quản lý thư viện — Demo API Blueprint format.\n\nAPI Blueprint sử dụng Markdown để mô tả API, rất dễ đọc và viết."
+    },
+    "paths": {
+        "/books": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {},
+                        "examples": {
+                            "application/json": [
+                                {
+                                    "id": 1,
+                                    "title": "Dế Mèn Phiêu Lưu Ký",
+                                    "author": "Tô Hoài",
+                                    "genre": "fiction",
+                                    "year": 1941,
+                                    "available": true
+                                },
+                                {
+                                    "id": 2,
+                                    "title": "Số Đỏ",
+                                    "author": "Vũ Trọng Phụng",
+                                    "genre": "fiction",
+                                    "year": 1936,
+                                    "available": true
+                                }
+                            ]
+                        },
+                        "schema": {
+                            "type": "array",
+                            "items": {}
+                        }
+                    }
+                },
+                "summary": "Lấy danh sách sách",
+                "operationId": "Lấy danh sách sách",
+                "description": "Trả về danh sách tất cả sách. Có thể lọc theo thể loại hoặc tác giả.",
+                "tags": [
+                    "Books"
+                ],
+                "parameters": [
+                    {
+                        "name": "genre",
+                        "in": "query",
+                        "description": "Lọc theo thể loại\n\n+ Example: `fiction`",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "author",
+                        "in": "query",
+                        "description": "Lọc theo tác giả\n\n+ Example: `Tô Hoài`",
+                        "required": false,
+                        "type": "string"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": []
+            },
+            "post": {
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "headers": {},
+                        "examples": {
+                            "application/json": {
+                                "id": 3,
+                                "title": "Clean Code",
+                                "author": "Robert C. Martin",
+                                "genre": "technology",
+                                "year": 2008,
+                                "available": true
+                            }
+                        },
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "number",
+                                    "description": "ID tự sinh"
+                                },
+                                "title": {
+                                    "type": "string",
+                                    "description": "Tên sách"
+                                },
+                                "author": {
+                                    "type": "string",
+                                    "description": "Tác giả"
+                                },
+                                "genre": {
+                                    "type": "string",
+                                    "description": "Thể loại"
+                                },
+                                "year": {
+                                    "type": "number",
+                                    "description": "Năm xuất bản"
+                                },
+                                "available": {
+                                    "type": "boolean",
+                                    "description": "Còn sẵn không"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "title",
+                                "author"
+                            ]
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "headers": {},
+                        "examples": {
+                            "application/json": {
+                                "detail": "Validation error"
+                            }
+                        },
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "detail": {
+                                    "type": "string"
+                                }
+                            },
+                            "example": {
+                                "detail": "Validation error"
+                            }
+                        }
+                    }
+                },
+                "summary": "Thêm sách mới",
+                "operationId": "Thêm sách mới",
+                "description": "Tạo một cuốn sách mới trong thư viện.",
+                "tags": [
+                    "Books"
+                ],
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "title": {
+                                    "type": "string",
+                                    "description": "Tên sách"
+                                },
+                                "author": {
+                                    "type": "string",
+                                    "description": "Tác giả"
+                                },
+                                "genre": {
+                                    "type": "string",
+                                    "description": "Thể loại"
+                                },
+                                "year": {
+                                    "type": "number",
+                                    "description": "Năm xuất bản"
+                                },
+                                "available": {
+                                    "type": "boolean",
+                                    "description": "Còn sẵn không"
+                                }
+                            },
+                            "required": [
+                                "title",
+                                "author"
+                            ],
+                            "example": {
+                                "title": "Clean Code",
+                                "author": "Robert C. Martin",
+                                "genre": "technology",
+                                "year": 2008,
+                                "available": true
+                            }
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ]
+            }
+        },
+        "/books/{id}": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {},
+                        "examples": {
+                            "application/json": {
+                                "id": 1,
+                                "title": "Dế Mèn Phiêu Lưu Ký",
+                                "author": "Tô Hoài",
+                                "genre": "fiction",
+                                "year": 1941,
+                                "available": true
+                            }
+                        },
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "number",
+                                    "description": "ID tự sinh"
+                                },
+                                "title": {
+                                    "type": "string",
+                                    "description": "Tên sách"
+                                },
+                                "author": {
+                                    "type": "string",
+                                    "description": "Tác giả"
+                                },
+                                "genre": {
+                                    "type": "string",
+                                    "description": "Thể loại"
+                                },
+                                "year": {
+                                    "type": "number",
+                                    "description": "Năm xuất bản"
+                                },
+                                "available": {
+                                    "type": "boolean",
+                                    "description": "Còn sẵn không"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "title",
+                                "author"
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "headers": {},
+                        "examples": {
+                            "application/json": {
+                                "detail": "Book not found"
+                            }
+                        },
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "detail": {
+                                    "type": "string"
+                                }
+                            },
+                            "example": {
+                                "detail": "Book not found"
+                            }
+                        }
+                    }
+                },
+                "summary": "Lấy chi tiết sách",
+                "operationId": "Lấy chi tiết sách",
+                "description": "Trả về thông tin chi tiết của một cuốn sách.",
+                "tags": [
+                    "Books"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của sách\n\n+ Example: `1`",
+                        "required": true,
+                        "type": "number"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": []
+            },
+            "put": {
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {},
+                        "examples": {
+                            "application/json": {
+                                "id": 1,
+                                "title": "Dế Mèn Phiêu Lưu Ký (Tái bản)",
+                                "author": "Tô Hoài",
+                                "genre": "fiction",
+                                "year": 1941,
+                                "available": true
+                            }
+                        },
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "number",
+                                    "description": "ID tự sinh"
+                                },
+                                "title": {
+                                    "type": "string",
+                                    "description": "Tên sách"
+                                },
+                                "author": {
+                                    "type": "string",
+                                    "description": "Tác giả"
+                                },
+                                "genre": {
+                                    "type": "string",
+                                    "description": "Thể loại"
+                                },
+                                "year": {
+                                    "type": "number",
+                                    "description": "Năm xuất bản"
+                                },
+                                "available": {
+                                    "type": "boolean",
+                                    "description": "Còn sẵn không"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "title",
+                                "author"
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "headers": {},
+                        "examples": {
+                            "application/json": {
+                                "detail": "Book not found"
+                            }
+                        },
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "detail": {
+                                    "type": "string"
+                                }
+                            },
+                            "example": {
+                                "detail": "Book not found"
+                            }
+                        }
+                    }
+                },
+                "summary": "Cập nhật sách",
+                "operationId": "Cập nhật sách",
+                "description": "Cập nhật toàn bộ thông tin sách.",
+                "tags": [
+                    "Books"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của sách\n\n+ Example: `1`",
+                        "required": true,
+                        "type": "number"
+                    },
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "title": {
+                                    "type": "string",
+                                    "description": "Tên sách"
+                                },
+                                "author": {
+                                    "type": "string",
+                                    "description": "Tác giả"
+                                },
+                                "genre": {
+                                    "type": "string",
+                                    "description": "Thể loại"
+                                },
+                                "year": {
+                                    "type": "number",
+                                    "description": "Năm xuất bản"
+                                },
+                                "available": {
+                                    "type": "boolean",
+                                    "description": "Còn sẵn không"
+                                }
+                            },
+                            "required": [
+                                "title",
+                                "author"
+                            ],
+                            "example": {
+                                "title": "Dế Mèn Phiêu Lưu Ký (Tái bản)",
+                                "author": "Tô Hoài",
+                                "genre": "fiction",
+                                "year": 1941,
+                                "available": true
+                            }
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ]
+            },
+            "delete": {
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {},
+                        "examples": {
+                            "application/json": {
+                                "message": "Book deleted successfully"
+                            }
+                        },
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string"
+                                }
+                            },
+                            "example": {
+                                "message": "Book deleted successfully"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "headers": {},
+                        "examples": {
+                            "application/json": {
+                                "detail": "Book not found"
+                            }
+                        },
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "detail": {
+                                    "type": "string"
+                                }
+                            },
+                            "example": {
+                                "detail": "Book not found"
+                            }
+                        }
+                    }
+                },
+                "summary": "Xóa sách",
+                "operationId": "Xóa sách",
+                "description": "Xóa một cuốn sách khỏi thư viện.",
+                "tags": [
+                    "Books"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của sách\n\n+ Example: `1`",
+                        "required": true,
+                        "type": "number"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": []
+            }
+        }
+    },
+    "definitions": {
+        "Books Collection": {},
+        "Book Resource": {},
+        "Book": {
+            "type": "object",
+            "required": [
+                "id",
+                "title",
+                "author"
+            ],
+            "properties": {
+                "id": {
+                    "type": "number",
+                    "example": 1,
+                    "description": "ID tự sinh"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Dế Mèn Phiêu Lưu Ký",
+                    "description": "Tên sách"
+                },
+                "author": {
+                    "type": "string",
+                    "example": "Tô Hoài",
+                    "description": "Tác giả"
+                },
+                "genre": {
+                    "type": "string",
+                    "example": "fiction",
+                    "description": "Thể loại"
+                },
+                "year": {
+                    "type": "number",
+                    "example": 1941,
+                    "description": "Năm xuất bản"
+                },
+                "available": {
+                    "type": "boolean",
+                    "example": true,
+                    "description": "Còn sẵn không"
+                }
+            }
+        },
+        "BookCreate": {
+            "type": "object",
+            "required": [
+                "title",
+                "author"
+            ],
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "example": "Dế Mèn Phiêu Lưu Ký",
+                    "description": "Tên sách"
+                },
+                "author": {
+                    "type": "string",
+                    "example": "Tô Hoài",
+                    "description": "Tác giả"
+                },
+                "genre": {
+                    "type": "string",
+                    "example": "fiction",
+                    "description": "Thể loại"
+                },
+                "year": {
+                    "type": "number",
+                    "example": 1941,
+                    "description": "Năm xuất bản"
+                },
+                "available": {
+                    "type": "boolean",
+                    "example": true,
+                    "description": "Còn sẵn không"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {},
+    "tags": [
+        {
+            "name": "Books",
+            "description": "Quản lý sách trong thư viện."
+        }
+    ]
+}

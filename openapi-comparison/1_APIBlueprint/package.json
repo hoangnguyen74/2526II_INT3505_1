@@ -1,0 +1,18 @@
+{
+  "name": "1_apiblueprint",
+  "version": "1.0.0",
+  "description": "**API Blueprint** sử dụng cú pháp Markdown để mô tả API. Dễ đọc nhất trong các formats — giống viết tài liệu thông thường.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "aglio": "^2.3.0",
+    "drakov": "^2.0.1",
+    "dredd": "^14.1.0"
+  }
+}
