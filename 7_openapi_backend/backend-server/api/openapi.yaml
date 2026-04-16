@@ -1,0 +1,141 @@
+openapi: 3.0.0
+info:
+  description: API quản lý sản phẩm sử dụng OpenAPI sinh ra mã NodeJS và tích hợp
+    MongoDB
+  title: Mongoose Product API
+  version: 1.0.0
+servers:
+- url: http://localhost:3000/api/v1
+paths:
+  /products:
+    get:
+      operationId: productsGET
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/Product"
+                type: array
+          description: Thành công
+      summary: Lấy danh sách sản phẩm
+      tags:
+      - Product
+      x-eov-operation-handler: controllers/ProductController
+    post:
+      operationId: productsPOST
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+          description: Tạo thành công
+      summary: Tạo sản phẩm mới
+      tags:
+      - Product
+      x-eov-operation-handler: controllers/ProductController
+  /products/{id}:
+    delete:
+      operationId: productsIdDELETE
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Xoá thành công
+      summary: Xoá sản phẩm
+      tags:
+      - Product
+      x-eov-operation-handler: controllers/ProductController
+    get:
+      operationId: productsIdGET
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Mảng chứa chi tiết sản phẩm
+        "404":
+          description: Không tìm thấy
+      summary: Lấy chi tiết sản phẩm
+      tags:
+      - Product
+      x-eov-operation-handler: controllers/ProductController
+    put:
+      operationId: productsIdPUT
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+        required: true
+      responses:
+        "200":
+          description: Thành công
+        "404":
+          description: Lỗi
+      summary: Cập nhật sản phẩm
+      tags:
+      - Product
+      x-eov-operation-handler: controllers/ProductController
+components:
+  schemas:
+    Product:
+      example:
+        price: 0.8008281904610115
+        name: name
+        description: description
+        _id: _id
+      properties:
+        _id:
+          description: ObjectID sinh tự động bởi MongoDB
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+        description:
+          type: string
+      type: object
+    ProductInput:
+      example:
+        price: 0.8008281904610115
+        name: name
+        description: description
+      properties:
+        name:
+          type: string
+        price:
+          type: number
+        description:
+          type: string
+      required:
+      - name
+      - price
+      type: object

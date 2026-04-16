@@ -1,0 +1,120 @@
+openapi: 3.0.0
+info:
+  title: Mongoose Product API
+  description: API quản lý sản phẩm sử dụng OpenAPI sinh ra mã NodeJS và tích hợp MongoDB
+  version: 1.0.0
+servers:
+  - url: "http://localhost:3000/api/v1"
+paths:
+  /products:
+    get:
+      tags:
+        - Product
+      summary: Lấy danh sách sản phẩm
+      responses:
+        "200":
+          description: Thành công
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+    post:
+      tags:
+        - Product
+      summary: Tạo sản phẩm mới
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "201":
+          description: Tạo thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+                
+  /products/{id}:
+    get:
+      tags:
+        - Product
+      summary: Lấy chi tiết sản phẩm
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Mảng chứa chi tiết sản phẩm
+        "404":
+          description: Không tìm thấy
+          
+    put:
+      tags:
+        - Product
+      summary: Cập nhật sản phẩm
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "200":
+          description: Thành công
+        "404":
+          description: Lỗi
+
+    delete:
+      tags:
+        - Product
+      summary: Xoá sản phẩm
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Xoá thành công
+          
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: ObjectID sinh tự động bởi MongoDB
+        name:
+          type: string
+        price:
+          type: number
+        description:
+          type: string
+          
+    ProductInput:
+      type: object
+      required:
+        - name
+        - price
+      properties:
+        name:
+          type: string
+        price:
+          type: number
+        description:
+          type: string

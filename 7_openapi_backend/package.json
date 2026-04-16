@@ -1,0 +1,18 @@
+{
+  "name": "7_openapi_backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "generate_online.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "js-yaml": "^4.1.1",
+    "mongodb-memory-server": "^11.0.1",
+    "mongoose": "^9.4.1"
+  }
+}
