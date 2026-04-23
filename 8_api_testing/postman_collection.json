@@ -1,0 +1,190 @@
+{
+	"info": {
+		"name": "Buổi 8 - Product API Test Suite",
+		"description": "Bộ test tự động cho 5 endpoints CRUD Product API.\nImport vào Postman → Run Collection → Xem kết quả Pass/Fail.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000"
+		},
+		{
+			"key": "created_id",
+			"value": ""
+		}
+	],
+	"item": [
+		{
+			"name": "1. GET /products - Lấy danh sách",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test 1: Status code phải là 200",
+							"pm.test('Status code = 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"// Test 2: Response time phải dưới 500ms",
+							"pm.test('Response time < 500ms', function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(500);",
+							"});",
+							"",
+							"// Test 3: Body phải là một mảng JSON",
+							"pm.test('Body trả về là mảng', function () {",
+							"    const data = pm.response.json();",
+							"    pm.expect(data).to.be.an('array');",
+							"    pm.expect(data.length).to.be.greaterThan(0);",
+							"});",
+							"",
+							"// Test 4: Mỗi sản phẩm phải có đủ trường",
+							"pm.test('Mỗi sản phẩm có id, name, price', function () {",
+							"    const first = pm.response.json()[0];",
+							"    pm.expect(first).to.have.property('id');",
+							"    pm.expect(first).to.have.property('name');",
+							"    pm.expect(first).to.have.property('price');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": { "raw": "{{base_url}}/products", "host": ["{{base_url}}"], "path": ["products"] }
+			}
+		},
+		{
+			"name": "2. POST /products - Tạo mới",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code = 201 Created', function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test('Trả về đúng tên sản phẩm', function () {",
+							"    const data = pm.response.json();",
+							"    pm.expect(data.name).to.eql('Galaxy S25 Ultra');",
+							"});",
+							"",
+							"pm.test('Server tự sinh ID', function () {",
+							"    const data = pm.response.json();",
+							"    pm.expect(data.id).to.be.a('number');",
+							"    // Lưu ID để dùng cho các request tiếp theo",
+							"    pm.collectionVariables.set('created_id', data.id);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [{ "key": "Content-Type", "value": "application/json" }],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Galaxy S25 Ultra\",\n  \"price\": 33990000,\n  \"category\": \"Điện thoại\"\n}"
+				},
+				"url": { "raw": "{{base_url}}/products", "host": ["{{base_url}}"], "path": ["products"] }
+			}
+		},
+		{
+			"name": "3. GET /products/:id - Lấy chi tiết",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code = 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Trả về đúng sản phẩm vừa tạo', function () {",
+							"    const data = pm.response.json();",
+							"    const expectedId = Number(pm.collectionVariables.get('created_id'));",
+							"    pm.expect(data.id).to.eql(expectedId);",
+							"    pm.expect(data.name).to.eql('Galaxy S25 Ultra');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": { "raw": "{{base_url}}/products/{{created_id}}", "host": ["{{base_url}}"], "path": ["products", "{{created_id}}"] }
+			}
+		},
+		{
+			"name": "4. PUT /products/:id - Cập nhật",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code = 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Giá đã được cập nhật', function () {",
+							"    const data = pm.response.json();",
+							"    pm.expect(data.price).to.eql(29990000);",
+							"});",
+							"",
+							"pm.test('Tên không bị thay đổi', function () {",
+							"    const data = pm.response.json();",
+							"    pm.expect(data.name).to.eql('Galaxy S25 Ultra');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [{ "key": "Content-Type", "value": "application/json" }],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"price\": 29990000\n}"
+				},
+				"url": { "raw": "{{base_url}}/products/{{created_id}}", "host": ["{{base_url}}"], "path": ["products", "{{created_id}}"] }
+			}
+		},
+		{
+			"name": "5. DELETE /products/:id - Xoá",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code = 204 No Content', function () {",
+							"    pm.response.to.have.status(204);",
+							"});",
+							"",
+							"// Gọi lại GET để xác nhận đã xoá thật",
+							"pm.test('Xác nhận sản phẩm đã biến mất', function () {",
+							"    const id = pm.collectionVariables.get('created_id');",
+							"    pm.sendRequest(pm.variables.get('base_url') + '/products/' + id, function (err, res) {",
+							"        pm.expect(res.code).to.eql(404);",
+							"    });",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": { "raw": "{{base_url}}/products/{{created_id}}", "host": ["{{base_url}}"], "path": ["products", "{{created_id}}"] }
+			}
+		}
+	]
+}

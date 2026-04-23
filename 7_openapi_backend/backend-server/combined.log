@@ -1,3 +1,6 @@
 {"level":"info","message":"Starting MongoDB Virtual Server...","service":"user-service","timestamp":"2026-04-16T09:01:03.169Z"}
 {"level":"info","message":"Connected to MongoDB In-Memory at mongodb://127.0.0.1:61862/","service":"user-service","timestamp":"2026-04-16T09:01:05.433Z"}
 {"level":"info","message":"Express server running","service":"user-service","timestamp":"2026-04-16T09:01:05.443Z"}
+{"level":"info","message":"Starting MongoDB Virtual Server...","service":"user-service","timestamp":"2026-04-16T09:17:01.342Z"}
+{"level":"info","message":"Connected to MongoDB In-Memory at mongodb://127.0.0.1:51183/","service":"user-service","timestamp":"2026-04-16T09:17:01.705Z"}
+{"level":"info","message":"Express server running","service":"user-service","timestamp":"2026-04-16T09:17:01.714Z"}
