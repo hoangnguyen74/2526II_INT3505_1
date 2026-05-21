@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>API Monitoring Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;padding:20px}
+
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding:0 8px}
+.header h1{font-size:22px;font-weight:700;color:#38bdf8}
+.header .status{display:flex;align-items:center;gap:8px;font-size:14px}
+.dot{width:10px;height:10px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Cards */
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px}
+.card{background:#1e293b;border-radius:12px;padding:18px 20px;border:1px solid #334155}
+.card .label{font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.card .value{font-size:32px;font-weight:700;color:#f8fafc}
+.card .sub{font-size:12px;color:#64748b;margin-top:4px}
+.card.warn .value{color:#fbbf24}
+.card.danger .value{color:#f87171}
+.card.ok .value{color:#4ade80}
+
+/* Charts */
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.chart-box{background:#1e293b;border-radius:12px;padding:20px;border:1px solid #334155}
+.chart-box h3{font-size:14px;color:#94a3b8;margin-bottom:12px;font-weight:500}
+
+/* Controls */
+.controls{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.btn{padding:10px 24px;border:none;border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn:hover{transform:translateY(-1px)}
+.btn-blue{background:#0ea5e9;color:#fff}
+.btn-blue:hover{background:#0284c7}
+.btn-green{background:#22c55e;color:#fff}
+.btn-green:hover{background:#16a34a}
+.btn-red{background:#ef4444;color:#fff}
+.btn-red:hover{background:#dc2626}
+.btn-gray{background:#334155;color:#e2e8f0}
+.btn-gray:hover{background:#475569}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* Log */
+.log-box{background:#1e293b;border-radius:12px;padding:16px;border:1px solid #334155;max-height:200px;overflow-y:auto}
+.log-box h3{font-size:14px;color:#94a3b8;margin-bottom:8px}
+.log-line{font-family:'Consolas',monospace;font-size:12px;padding:3px 0;border-bottom:1px solid #1a2332;color:#cbd5e1}
+.log-line.warn{color:#fbbf24}
+.log-line.error{color:#f87171}
+.log-line.ok{color:#4ade80}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 API Monitoring Dashboard</h1>
+  <div class="status"><div class="dot" id="dot"></div><span id="statusText">Connecting...</span></div>
+</div>
+
+<!-- Metric Cards -->
+<div class="cards">
+  <div class="card"><div class="label">Total Requests</div><div class="value" id="totalReq">0</div><div class="sub">All endpoints</div></div>
+  <div class="card ok"><div class="label">Success (2xx)</div><div class="value" id="successReq">0</div><div class="sub" id="successRate">0%</div></div>
+  <div class="card danger"><div class="label">Errors</div><div class="value" id="errorReq">0</div><div class="sub" id="errorRate">0% error rate</div></div>
+  <div class="card warn"><div class="label">Rate Limit Hits</div><div class="value" id="rateHits">0</div><div class="sub">429 responses</div></div>
+  <div class="card"><div class="label">Uptime</div><div class="value" id="uptime">0s</div><div class="sub" id="circuitState">Circuit: --</div></div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="btn btn-blue" onclick="sendRequests('/api/products', 5)">📦 GET Products ×5</button>
+  <button class="btn btn-green" onclick="createProduct()">➕ Create Product</button>
+  <button class="btn btn-red" onclick="sendRequests('/api/limited', 15)">🚨 Spam Rate Limit ×15</button>
+  <button class="btn btn-gray" onclick="sendRequests('/api/external/payment-gateway', 8)">⚡ Circuit Breaker ×8</button>
+  <button class="btn btn-gray" onclick="resetAll()">🔄 Reset All</button>
+</div>
+
+<!-- Charts -->
+<div class="charts">
+  <div class="chart-box">
+    <h3>📈 Requests Over Time (mỗi 2 giây)</h3>
+    <canvas id="reqChart" height="140"></canvas>
+  </div>
+  <div class="chart-box">
+    <h3>⏱ Avg Response Time (ms)</h3>
+    <canvas id="latChart" height="140"></canvas>
+  </div>
+  <div class="chart-box">
+    <h3>🚫 Rate Limit & Errors</h3>
+    <canvas id="errChart" height="140"></canvas>
+  </div>
+  <div class="chart-box">
+    <h3>📊 Requests by Endpoint</h3>
+    <canvas id="pieChart" height="140"></canvas>
+  </div>
+</div>
+
+<!-- Live Log -->
+<div class="log-box">
+  <h3>📝 Live Activity Log</h3>
+  <div id="logArea"></div>
+</div>
+
+<script>
+const BASE = "http://localhost:8000";
+const MAX_POINTS = 30;
+
+// ── State ──
+let prevTotal = 0;
+let prevErrors = 0;
+let prevRateHits = 0;
+const timeLabels = [];
+const reqData = [];
+const errData = [];
+const rateData = [];
+const latData = [];
+const endpointCounts = {};
+
+// ── Charts ──
+const chartOpts = (ylabel) => ({
+  responsive: true,
+  animation: { duration: 300 },
+  scales: {
+    x: { ticks: { color: '#64748b', maxTicksLimit: 8 }, grid: { color: '#1a2332' } },
+    y: { beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: '#1a2332' } }
+  },
+  plugins: { legend: { display: false } }
+});
+
+const reqChart = new Chart(document.getElementById('reqChart'), {
+  type: 'line',
+  data: { labels: timeLabels, datasets: [{ data: reqData, borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.1)', fill: true, tension: 0.3, pointRadius: 2 }] },
+  options: chartOpts()
+});
+
+const latChart = new Chart(document.getElementById('latChart'), {
+  type: 'line',
+  data: { labels: timeLabels, datasets: [{ data: latData, borderColor: '#a78bfa', backgroundColor: 'rgba(167,139,250,0.1)', fill: true, tension: 0.3, pointRadius: 2 }] },
+  options: chartOpts()
+});
+
+const errChart = new Chart(document.getElementById('errChart'), {
+  type: 'bar',
+  data: { labels: timeLabels, datasets: [
+    { label: 'Errors', data: errData, backgroundColor: '#f87171' },
+    { label: 'Rate Limit', data: rateData, backgroundColor: '#fbbf24' }
+  ] },
+  options: { ...chartOpts(), plugins: { legend: { display: true, labels: { color: '#94a3b8' } } } }
+});
+
+const pieChart = new Chart(document.getElementById('pieChart'), {
+  type: 'doughnut',
+  data: {
+    labels: [],
+    datasets: [{ data: [], backgroundColor: ['#38bdf8','#4ade80','#fbbf24','#f87171','#a78bfa','#fb923c','#2dd4bf'] }]
+  },
+  options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 } } } } }
+});
+
+// ── Log ──
+function addLog(msg, type = '') {
+  const el = document.getElementById('logArea');
+  const time = new Date().toLocaleTimeString();
+  const div = document.createElement('div');
+  div.className = 'log-line ' + type;
+  div.textContent = `[${time}] ${msg}`;
+  el.insertBefore(div, el.firstChild);
+  if (el.children.length > 50) el.removeChild(el.lastChild);
+}
+
+// ── Parse Prometheus format ──
+function parseMetrics(text) {
+  const result = { requests: {}, errors: {}, latency: {}, rateHits: 0, cbTrips: 0, uptime: 0 };
+  for (const line of text.split('\n')) {
+    if (line.startsWith('#') || !line.trim()) continue;
+
+    let m;
+    m = line.match(/http_requests_total\{method="(\w+)",path="([^"]+)"\}\s+(\d+)/);
+    if (m) { result.requests[`${m[1]} ${m[2]}`] = parseInt(m[3]); continue; }
+
+    m = line.match(/http_errors_total\{method="(\w+)",path="([^"]+)"\}\s+(\d+)/);
+    if (m) { result.errors[`${m[1]} ${m[2]}`] = parseInt(m[3]); continue; }
+
+    m = line.match(/http_request_duration_ms\{method="(\w+)",path="([^"]+)"\}\s+([\d.]+)/);
+    if (m) { result.latency[`${m[1]} ${m[2]}`] = parseFloat(m[3]); continue; }
+
+    m = line.match(/rate_limit_hits_total\s+(\d+)/);
+    if (m) { result.rateHits = parseInt(m[1]); continue; }
+
+    m = line.match(/circuit_breaker_trips_total\s+(\d+)/);
+    if (m) { result.cbTrips = parseInt(m[1]); continue; }
+
+    m = line.match(/uptime_seconds\s+(\d+)/);
+    if (m) { result.uptime = parseInt(m[1]); }
+  }
+  return result;
+}
+
+// ── Poll ──
+async function poll() {
+  try {
+    const [metricsRes, healthRes] = await Promise.all([
+      fetch(`${BASE}/metrics`),
+      fetch(`${BASE}/health`)
+    ]);
+
+    const metricsText = await metricsRes.text();
+    const health = await healthRes.json();
+    const data = parseMetrics(metricsText);
+
+    // Totals
+    const totalReq = Object.values(data.requests).reduce((a, b) => a + b, 0);
+    const totalErr = Object.values(data.errors).reduce((a, b) => a + b, 0);
+    const successReq = totalReq - totalErr;
+
+    // Update cards
+    document.getElementById('totalReq').textContent = totalReq;
+    document.getElementById('successReq').textContent = successReq;
+    document.getElementById('successRate').textContent = totalReq ? `${((successReq/totalReq)*100).toFixed(1)}%` : '0%';
+    document.getElementById('errorReq').textContent = totalErr;
+    document.getElementById('errorRate').textContent = totalReq ? `${((totalErr/totalReq)*100).toFixed(1)}% error rate` : '0%';
+    document.getElementById('rateHits').textContent = data.rateHits;
+    document.getElementById('uptime').textContent = data.uptime + 's';
+    document.getElementById('circuitState').textContent = `Circuit: ${health.circuit_breaker}`;
+    document.getElementById('statusText').textContent = `Healthy · ${data.uptime}s uptime`;
+    document.getElementById('dot').style.background = '#22c55e';
+
+    // Time series
+    const now = new Date().toLocaleTimeString().slice(0, 5);
+    const deltaReq = totalReq - prevTotal;
+    const deltaErr = totalErr - prevErrors;
+    const deltaRate = data.rateHits - prevRateHits;
+    prevTotal = totalReq; prevErrors = totalErr; prevRateHits = data.rateHits;
+
+    timeLabels.push(now);
+    reqData.push(deltaReq);
+    errData.push(deltaErr);
+    rateData.push(deltaRate);
+
+    // Avg latency across all endpoints
+    const latValues = Object.values(data.latency);
+    const avgLat = latValues.length ? latValues.reduce((a, b) => a + b, 0) / latValues.length : 0;
+    latData.push(avgLat.toFixed(1));
+
+    if (timeLabels.length > MAX_POINTS) {
+      timeLabels.shift(); reqData.shift(); errData.shift(); rateData.shift(); latData.shift();
+    }
+
+    reqChart.update(); latChart.update(); errChart.update();
+
+    // Pie chart
+    const labels = Object.keys(data.requests);
+    const values = Object.values(data.requests);
+    pieChart.data.labels = labels;
+    pieChart.data.datasets[0].data = values;
+    pieChart.update();
+
+  } catch (e) {
+    document.getElementById('dot').style.background = '#ef4444';
+    document.getElementById('statusText').textContent = 'Disconnected';
+  }
+}
+
+// ── Actions ──
+async function sendRequests(path, count) {
+  addLog(`Sending ${count} requests to ${path}...`, 'ok');
+  for (let i = 0; i < count; i++) {
+    try {
+      const r = await fetch(`${BASE}${path}`);
+      if (r.status === 429) {
+        addLog(`  #${i+1} → 429 RATE LIMITED`, 'warn');
+      } else if (r.status >= 400) {
+        addLog(`  #${i+1} → ${r.status} ERROR`, 'error');
+      } else {
+        addLog(`  #${i+1} → ${r.status} OK`);
+      }
+    } catch (e) {
+      addLog(`  #${i+1} → Network error`, 'error');
+    }
+    await new Promise(r => setTimeout(r, 200));
+  }
+  addLog(`Done! Refresh metrics...`, 'ok');
+  poll();
+}
+
+async function createProduct() {
+  try {
+    const r = await fetch(`${BASE}/api/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: `Product-${Date.now() % 10000}`, price: Math.floor(Math.random() * 50000000) })
+    });
+    const data = await r.json();
+    if (r.status === 201) addLog(`Created: ${data.name} (${data.price.toLocaleString()} VND)`, 'ok');
+    else if (r.status === 429) addLog(`Rate Limited! Cannot create product`, 'warn');
+    else addLog(`Error: ${JSON.stringify(data)}`, 'error');
+  } catch (e) {
+    addLog('Network error', 'error');
+  }
+  poll();
+}
+
+async function resetAll() {
+  await fetch(`${BASE}/api/external/circuit-reset`, { method: 'POST' });
+  addLog('Circuit Breaker reset to CLOSED', 'ok');
+  poll();
+}
+
+// ── Start polling ──
+poll();
+setInterval(poll, 2000);
+</script>
+</body>
+</html>
