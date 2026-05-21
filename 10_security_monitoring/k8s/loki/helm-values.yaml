@@ -2,6 +2,10 @@
 # Cài: helm install loki grafana/loki-stack \
 #        -f k8s/loki/helm-values.yaml -n monitoring
 
+# NOTE: loki-stack chart tự tạo ConfigMap "loki-loki-stack" với isDefault:true
+# → conflict với Prometheus (cũng isDefault:true từ kube-prometheus-stack)
+# Fix: start-cluster.ps1 sẽ patch ConfigMap sau khi deploy để set isDefault:false
+
 loki:
   enabled: true
   persistence:

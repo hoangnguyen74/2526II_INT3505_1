@@ -77,6 +77,19 @@ Step "Deploy Jaeger all-in-one"
 kubectl apply -f "$PSScriptRoot\jaeger\jaeger.yaml"
 OK "Jaeger deployed"
 
+# ── 8b. Fix Loki datasource default conflict ──
+# loki-stack chart tao ConfigMap voi isDefault:true → conflict voi Prometheus
+# Patch lai de chi co duy nhat 1 default datasource (Prometheus)
+Step "Fix Loki datasource (isDefault: false)"
+$lokiPatch = '{"data":{"loki-stack-datasource.yaml":"apiVersion: 1\ndatasources:\n- name: Loki\n  type: loki\n  access: proxy\n  url: \"http://loki:3100\"\n  version: 1\n  isDefault: false\n  jsonData:\n    {}"}}'
+$lokiPatch | Out-File -FilePath "$env:TEMP\loki-patch.json" -Encoding ascii -NoNewline
+kubectl patch configmap loki-loki-stack -n monitoring --type=merge "--patch-file=$env:TEMP\loki-patch.json" 2>$null
+if ($LASTEXITCODE -eq 0) {
+    OK "Loki datasource isDefault fixed"
+} else {
+    Warn "Loki ConfigMap chua ton tai (se tu fix khi start)"
+}
+
 # ── 9. Cho pods san sang ──
 Step "Doi pods san sang (co the mat 2-3 phut)"
 kubectl wait --for=condition=ready pod -l app=payment-api -n monitoring --timeout=120s

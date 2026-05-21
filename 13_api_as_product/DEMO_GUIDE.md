@@ -2,7 +2,7 @@
 
 ## Khởi động
 
-```bash
+```powershell
 cd 13_api_as_product
 pip install -r requirements.txt
 py -m uvicorn main:app --reload
@@ -17,33 +17,51 @@ py -m uvicorn main:app --reload
 
 ### 1.1 Xem bảng giá
 
-```bash
-curl http://localhost:8000/plans | python -m json.tool
+```powershell
+Invoke-RestMethod http://localhost:8000/plans
 ```
 
 **Hỏi lớp**: Tại sao Free plan lại cần? (Acquisition funnel)
 
 ---
 
-### 1.2 Đăng ký API key (Free)
+### 1.2 Sandbox — không cần key
 
-```bash
-curl -X POST http://localhost:8000/developers/register \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Demo User","email":"demo@test.com","plan":"free"}'
+```powershell
+# Ai cũng gọi được, không tốn quota
+Invoke-RestMethod http://localhost:8000/sandbox/products
+```
+
+**Quan sát**: data có `[DEMO]` prefix, có hướng dẫn đăng ký key.
+
+---
+
+### 1.3 Đăng ký API key (Free)
+
+```powershell
+$reg = Invoke-RestMethod -Method POST http://localhost:8000/developers/register `
+  -ContentType "application/json" `
+  -Body '{"name":"Demo User","email":"demo@test.com","plan":"free"}'
+
+$key = $reg.api_key
+Write-Host "API Key: $key"
 ```
 
 **Quan sát**: Key được cấp ngay, không cần phê duyệt → **Time-to-first-call < 1 phút**.
 
-Lưu lại `api_key` từ response (dạng `sk_xxxxxxxx`).
-
 ---
 
-### 1.3 Gọi API với key
+### 1.4 Gọi API với key — xem response headers
 
-```bash
-# Thay YOUR_KEY bằng key vừa nhận
-curl -H "X-API-Key: YOUR_KEY" http://localhost:8000/api/v1/products
+```powershell
+$resp = Invoke-WebRequest -Uri http://localhost:8000/api/v1/products `
+  -Headers @{"X-API-Key"=$key}
+
+# Xem headers quota
+$resp.Headers["X-Plan"]
+$resp.Headers["X-Quota-Limit"]
+$resp.Headers["X-Quota-Remaining"]
+$resp.Headers["X-Response-Time"]
 ```
 
 **Quan sát** response headers:
@@ -56,38 +74,31 @@ X-Response-Time: 12.3ms
 
 ---
 
-### 1.4 Sandbox — không cần key
-
-```bash
-# Ai cũng gọi được, không tốn quota
-curl http://localhost:8000/sandbox/products
-```
-
-**Quan sát**: data có `[DEMO]` prefix, có hướng dẫn đăng ký key.
-
----
-
 ## Phần 2 — Quota & Monetization
 
 ### 2.1 Gọi API không có key → 422/401
 
-```bash
-curl http://localhost:8000/api/v1/products
-# → 422: X-API-Key header bắt buộc
+```powershell
+# Gọi không có key --> 422
+try { Invoke-RestMethod http://localhost:8000/api/v1/products } catch { $_.ErrorDetails.Message }
 
-curl -H "X-API-Key: sk_invalid" http://localhost:8000/api/v1/products
-# → 401: Invalid API key
+# Key sai --> 401
+try {
+    Invoke-RestMethod http://localhost:8000/api/v1/products `
+      -Headers @{"X-API-Key"="sk_invalid"}
+} catch { $_.ErrorDetails.Message }
 ```
 
 ---
 
 ### 2.2 Feature gating — Search chỉ cho Pro+
 
-```bash
-# Dùng key của Free user
-curl -H "X-API-Key: YOUR_FREE_KEY" \
-  "http://localhost:8000/api/v1/search?q=iphone"
-# → 403: FEATURE_LOCKED với hướng dẫn upgrade
+```powershell
+# Dùng key của Free user --> 403 FEATURE_LOCKED
+try {
+    Invoke-RestMethod "http://localhost:8000/api/v1/search?q=iphone" `
+      -Headers @{"X-API-Key"=$key}
+} catch { $_.ErrorDetails.Message }
 ```
 
 **Thảo luận**: Feature gating vs. Quota limit — dùng khi nào?
@@ -96,20 +107,22 @@ curl -H "X-API-Key: YOUR_FREE_KEY" \
 
 ### 2.3 Nâng cấp plan
 
-```bash
-curl -X POST http://localhost:8000/developers/upgrade \
-  -H "Content-Type: application/json" \
-  -d '{"email":"demo@test.com","new_plan":"pro"}'
-```
+```powershell
+Invoke-RestMethod -Method POST http://localhost:8000/developers/upgrade `
+  -ContentType "application/json" `
+  -Body '{"email":"demo@test.com","new_plan":"pro"}'
 
-Sau đó gọi lại search → thành công.
+# Sau khi nâng cấp — Search thành công
+Invoke-RestMethod "http://localhost:8000/api/v1/search?q=iphone" `
+  -Headers @{"X-API-Key"=$key}
+```
 
 ---
 
 ### 2.4 Xem usage của developer
 
-```bash
-curl http://localhost:8000/developers/demo@test.com/usage
+```powershell
+Invoke-RestMethod http://localhost:8000/developers/demo@test.com/usage
 ```
 
 **Quan sát**: `today.used`, `today.remaining`, `daily_history`.
@@ -118,10 +131,14 @@ curl http://localhost:8000/developers/demo@test.com/usage
 
 ## Phần 3 — KPI Analytics (Admin)
 
-```bash
-# Admin key: admin-secret-key
-curl -H "X-Admin-Key: admin-secret-key" \
-  http://localhost:8000/admin/analytics | python -m json.tool
+```powershell
+# Dashboard KPI: MRR, error rate, top endpoints
+Invoke-RestMethod http://localhost:8000/admin/analytics `
+  -Headers @{"X-Admin-Key"="admin-secret-key"}
+
+# Danh sách developers + revenue breakdown
+Invoke-RestMethod http://localhost:8000/admin/developers `
+  -Headers @{"X-Admin-Key"="admin-secret-key"}
 ```
 
 **KPIs có trong response**:
@@ -133,21 +150,15 @@ curl -H "X-Admin-Key: admin-secret-key" \
 - `top_endpoints`: Endpoints phổ biến nhất
 - `monthly_recurring_revenue_usd`: Doanh thu MRR
 
-```bash
-# Danh sách developers + revenue breakdown
-curl -H "X-Admin-Key: admin-secret-key" \
-  http://localhost:8000/admin/developers | python -m json.tool
-```
-
 ---
 
 ## Phần 4 — Developer Portal (portal.html)
 
-1. Mở `portal.html` trong trình duyệt
-2. Demo live stats tự cập nhật mỗi 5 giây
-3. Điền form đăng ký → nhận key hiển thị ngay
-4. Tab Quick Start → copy code mẫu
-5. My Usage → nhập email → xem usage bar + quota
+1. Mở `portal.html` trong trình duyệt (double-click file)
+2. **Live Stats** tự cập nhật mỗi 5 giây từ `/admin/analytics`
+3. **Register** form → nhận API key hiển thị ngay
+4. **My Usage** → nhập email → xem quota bar đổi màu (xanh/vàng/đỏ)
+5. **Quick Start** tabs → copy code mẫu cURL/Python/JavaScript
 
 ---
 

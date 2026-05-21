@@ -2,7 +2,7 @@
 
 ## Cài đặt
 
-```bash
+```powershell
 cd 11_api_design_patterns
 pip install -r requirements.txt
 ```
@@ -13,7 +13,7 @@ pip install -r requirements.txt
 
 Mở **2 terminal**:
 
-```bash
+```powershell
 # Terminal 1 — Main API server
 py -m uvicorn main:app --reload --port 8000
 
@@ -29,43 +29,46 @@ py -m uvicorn webhook_receiver:app --port 8001
 
 ## Demo Pattern 1 — CRUD
 
-```bash
+```powershell
 # List products (có pagination + HATEOAS links)
-curl http://localhost:8000/api/v1/products
+Invoke-RestMethod http://localhost:8000/api/v1/products
 
 # Create product
-curl -X POST http://localhost:8000/api/v1/products \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Sony WH-1000XM5","price":7990000,"category":"audio","stock":25}'
+Invoke-RestMethod -Method POST http://localhost:8000/api/v1/products `
+  -ContentType "application/json" `
+  -Body '{"name":"Sony WH-1000XM5","price":7990000,"category":"audio","stock":25}'
 
-# Get single product — xem _links
-curl http://localhost:8000/api/v1/products/prod_001
+# Get single product — xem _links trong response
+Invoke-RestMethod http://localhost:8000/api/v1/products/prod_001
 
 # Update
-curl -X PUT http://localhost:8000/api/v1/products/prod_001 \
-  -H "Content-Type: application/json" \
-  -d '{"name":"iPhone 16 Pro","price":27990000,"category":"electronics","stock":45}'
+Invoke-RestMethod -Method PUT http://localhost:8000/api/v1/products/prod_001 `
+  -ContentType "application/json" `
+  -Body '{"name":"iPhone 16 Pro","price":27990000,"category":"electronics","stock":45}'
 
 # Delete
-curl -X DELETE http://localhost:8000/api/v1/products/prod_003
+Invoke-RestMethod -Method DELETE http://localhost:8000/api/v1/products/prod_003
 ```
 
 ---
 
 ## Demo Pattern 2 — Query Pattern
 
-```bash
+```powershell
 # Filter theo category
-curl "http://localhost:8000/api/v1/products?category=electronics"
+Invoke-RestMethod "http://localhost:8000/api/v1/products?category=electronics"
 
 # Filter khoảng giá + sort
-curl "http://localhost:8000/api/v1/products?min_price=5000000&max_price=30000000&sort=price:asc"
+Invoke-RestMethod "http://localhost:8000/api/v1/products?min_price=5000000&max_price=30000000&sort=price:asc"
 
 # Full-text search
-curl "http://localhost:8000/api/v1/products?q=macbook"
+Invoke-RestMethod "http://localhost:8000/api/v1/products?q=macbook"
 
 # Sparse Fieldsets — chỉ lấy id, status, total
-curl "http://localhost:8000/api/v1/orders?fields=id,status,total"
+Invoke-RestMethod "http://localhost:8000/api/v1/orders?fields=id,status,total"
+
+# Pagination
+Invoke-RestMethod "http://localhost:8000/api/v1/products?page=1&limit=5"
 ```
 
 ---
@@ -74,50 +77,69 @@ curl "http://localhost:8000/api/v1/orders?fields=id,status,total"
 
 ### Bước 1: Tạo order
 
-```bash
-curl -X POST http://localhost:8000/api/v1/orders \
-  -H "Content-Type: application/json" \
-  -d '{
+```powershell
+$order = Invoke-RestMethod -Method POST http://localhost:8000/api/v1/orders `
+  -ContentType "application/json" `
+  -Body '{
     "customer_email": "alice@example.com",
     "items": [
       {"product_id": "prod_001", "quantity": 1},
       {"product_id": "prod_003", "quantity": 2}
     ]
   }'
+
+# Xem _links — có confirm và cancel, không có ship hay deliver
+$order._links
 ```
 
 **Quan sát** `_links` trong response → có `confirm` và `cancel`, không có `ship` hay `deliver`.
 
 ### Bước 2: Chuyển trạng thái
 
-```bash
-# Thay ORDER_ID bằng id thực từ bước trên
-curl -X PATCH http://localhost:8000/api/v1/orders/ORDER_ID/status \
-  -H "Content-Type: application/json" \
-  -d '{"status":"confirmed"}'
+```powershell
+$oid = $order.id
+Invoke-RestMethod -Method PATCH "http://localhost:8000/api/v1/orders/$oid/status" `
+  -ContentType "application/json" `
+  -Body '{"status":"confirmed"}'
 ```
 
 **Quan sát** `_links` → giờ có `ship` và `cancel`, không còn `confirm`.
 
 ### Bước 3: Thử transition không hợp lệ → 409
 
-```bash
-curl -X PATCH http://localhost:8000/api/v1/orders/ORDER_ID/status \
-  -H "Content-Type: application/json" \
-  -d '{"status":"delivered"}'
+```powershell
+try {
+    Invoke-RestMethod -Method PATCH "http://localhost:8000/api/v1/orders/$oid/status" `
+      -ContentType "application/json" `
+      -Body '{"status":"delivered"}'
+} catch { $_.ErrorDetails.Message }
 # → 409 INVALID_TRANSITION
+```
+
+### Bước 4: Đi hết vòng đời order
+
+```powershell
+# Chuyển sang shipped
+Invoke-RestMethod -Method PATCH "http://localhost:8000/api/v1/orders/$oid/status" `
+  -ContentType "application/json" `
+  -Body '{"status":"shipped"}'
+
+# Chuyển sang delivered — _links sẽ rỗng (terminal state)
+Invoke-RestMethod -Method PATCH "http://localhost:8000/api/v1/orders/$oid/status" `
+  -ContentType "application/json" `
+  -Body '{"status":"delivered"}'
 ```
 
 ---
 
 ## Demo Pattern 4 — Event-driven
 
-```bash
+```powershell
 # Xem tất cả events đã publish
-curl http://localhost:8000/api/v1/events
+Invoke-RestMethod http://localhost:8000/api/v1/events
 
-# Filter theo loại
-curl "http://localhost:8000/api/v1/events?event_type=order.confirmed"
+# Filter theo loại event
+Invoke-RestMethod "http://localhost:8000/api/v1/events?event_type=order.confirmed"
 ```
 
 **Giải thích**: Mỗi action (create/update product, create/update order) đều publish một domain event.
@@ -129,32 +151,33 @@ Các subscribers có thể react độc lập: gửi email, cập nhật invento
 
 ### Bước 1: Đăng ký webhook
 
-```bash
-curl -X POST http://localhost:8000/api/v1/webhooks \
-  -H "Content-Type: application/json" \
-  -d '{
+```powershell
+$wh = Invoke-RestMethod -Method POST http://localhost:8000/api/v1/webhooks `
+  -ContentType "application/json" `
+  -Body '{
     "url": "http://localhost:8001/webhook",
     "events": ["order.created", "order.confirmed", "order.shipped", "order.delivered"],
     "secret": "demo-secret-123"
   }'
-```
 
-Lưu lại `webhook_id` từ response.
+$wid = $wh.id
+Write-Host "Webhook ID: $wid"
+```
 
 ### Bước 2: Gửi test event
 
-```bash
-curl -X POST http://localhost:8000/api/v1/webhooks/WEBHOOK_ID/test
+```powershell
+Invoke-RestMethod -Method POST "http://localhost:8000/api/v1/webhooks/$wid/test"
 ```
 
 **Kiểm tra** Terminal 2 — webhook receiver in log nhận được.
 
 ### Bước 3: Tạo order → trigger webhook tự động
 
-```bash
-curl -X POST http://localhost:8000/api/v1/orders \
-  -H "Content-Type: application/json" \
-  -d '{
+```powershell
+Invoke-RestMethod -Method POST http://localhost:8000/api/v1/orders `
+  -ContentType "application/json" `
+  -Body '{
     "customer_email": "bob@example.com",
     "items": [{"product_id": "prod_002", "quantity": 1}]
   }'
@@ -164,24 +187,29 @@ curl -X POST http://localhost:8000/api/v1/orders \
 
 ### Bước 4: Xem delivery log
 
-```bash
-curl http://localhost:8000/api/v1/webhooks/WEBHOOK_ID/deliveries
+```powershell
+Invoke-RestMethod "http://localhost:8000/api/v1/webhooks/$wid/deliveries"
 ```
 
-### Bước 5: Test retry (tắt receiver rồi trigger event)
+### Bước 5: Retry demo (tắt receiver rồi trigger event)
 
-```bash
-# Dừng Terminal 2 (Ctrl+C)
-# Tạo thêm order → webhook sẽ retry 3 lần, mỗi lần cách nhau 2s, 4s
+```powershell
+# Dừng Terminal 2 (Ctrl+C), sau đó tạo order mới
+Invoke-RestMethod -Method POST http://localhost:8000/api/v1/orders `
+  -ContentType "application/json" `
+  -Body '{"customer_email":"retry@example.com","items":[{"product_id":"prod_001","quantity":1}]}'
+
+# Webhook sẽ retry 3 lần, mỗi lần cách nhau 2s, 4s
 # Khởi động lại receiver → xem delivery log có status "failed"
+Invoke-RestMethod "http://localhost:8000/api/v1/webhooks/$wid/deliveries"
 ```
 
 ---
 
 ## Bonus — So sánh REST / gRPC / GraphQL
 
-```bash
-curl http://localhost:8000/api/v1/patterns/analysis | python -m json.tool
+```powershell
+Invoke-RestMethod http://localhost:8000/api/v1/patterns/analysis
 ```
 
 ---

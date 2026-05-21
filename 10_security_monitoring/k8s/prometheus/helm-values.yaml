@@ -13,10 +13,12 @@ grafana:
       type: loki
       url: http://loki.monitoring.svc.cluster.local:3100
       access: proxy
+      isDefault: false
     - name: Jaeger
       type: jaeger
       url: http://jaeger-query.monitoring.svc.cluster.local:16686
       access: proxy
+      isDefault: false
   # Dashboard mặc định
   dashboardProviders:
     dashboardproviders.yaml:
