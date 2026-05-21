@@ -1,0 +1,75 @@
+# Helm values cho kube-prometheus-stack
+# Cài: helm install kube-prom prometheus-community/kube-prometheus-stack \
+#        -f k8s/prometheus/helm-values.yaml -n monitoring
+
+grafana:
+  enabled: true
+  adminPassword: "admin123"
+  service:
+    type: ClusterIP     # dùng port-forward để truy cập
+  # Tự động add datasources
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      url: http://loki.monitoring.svc.cluster.local:3100
+      access: proxy
+    - name: Jaeger
+      type: jaeger
+      url: http://jaeger-query.monitoring.svc.cluster.local:16686
+      access: proxy
+  # Dashboard mặc định
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: default
+          orgId: 1
+          folder: ''
+          type: file
+          disableDeletion: false
+          options:
+            path: /var/lib/grafana/dashboards/default
+  dashboards:
+    default:
+      # FastAPI Observability Dashboard (cộng đồng)
+      fastapi-dashboard:
+        gnetId: 17819
+        revision: 6
+        datasource: Prometheus
+
+prometheus:
+  prometheusSpec:
+    # Scrape tất cả pods có annotation prometheus.io/scrape: "true"
+    podMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+    additionalScrapeConfigs:
+      - job_name: payment-api
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [monitoring]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: "true"
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: replace
+            target_label: app
+
+alertmanager:
+  enabled: false    # tắt để nhẹ hơn cho demo
+
+# Giảm resource usage cho demo
+kubeStateMetrics:
+  enabled: true
+nodeExporter:
+  enabled: false    # không cần cho demo

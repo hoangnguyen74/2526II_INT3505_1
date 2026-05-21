@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-api
+  namespace: monitoring
+  labels:
+    app: payment-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payment-api
+  template:
+    metadata:
+      labels:
+        app: payment-api
+      annotations:
+        # Prometheus tự động scrape pod này
+        prometheus.io/scrape: "true"
+        prometheus.io/port:   "8000"
+        prometheus.io/path:   "/metrics"
+    spec:
+      containers:
+        - name: api
+          image: payment-api:latest
+          imagePullPolicy: Never        # dùng image local build vào minikube
+          ports:
+            - containerPort: 8000
+          env:
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://jaeger-collector.monitoring.svc.cluster.local:4317"
+            - name: OTEL_SERVICE_NAME
+              value: "payment-api"
+            - name: LOG_TO_FILE
+              value: "false"            # chỉ log ra stdout, Promtail sẽ thu thập
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu:    "100m"
+            limits:
+              memory: "256Mi"
+              cpu:    "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10

@@ -1,0 +1,81 @@
+# Jaeger All-in-One — collector + query UI trong một pod
+# Nhận OTel traces qua gRPC port 4317, UI tại port 16686
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger
+  namespace: monitoring
+  labels:
+    app: jaeger
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jaeger
+  template:
+    metadata:
+      labels:
+        app: jaeger
+    spec:
+      containers:
+        - name: jaeger
+          image: jaegertracing/all-in-one:1.57
+          ports:
+            - containerPort: 16686   # Jaeger UI
+            - containerPort: 4317    # OTLP gRPC collector
+            - containerPort: 4318    # OTLP HTTP collector
+            - containerPort: 14268   # Jaeger HTTP collector (legacy)
+            - containerPort: 9411    # Zipkin compatible
+          env:
+            - name: COLLECTOR_OTLP_ENABLED
+              value: "true"
+            - name: MEMORY_MAX_TRACES
+              value: "5000"          # giữ tối đa 5000 traces trong memory
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu:    "100m"
+            limits:
+              memory: "512Mi"
+              cpu:    "500m"
+---
+# Service cho Jaeger collector (app gửi traces đến đây)
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger-collector
+  namespace: monitoring
+  labels:
+    app: jaeger
+spec:
+  selector:
+    app: jaeger
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+    - name: jaeger-http
+      port: 14268
+      targetPort: 14268
+  type: ClusterIP
+---
+# Service cho Jaeger UI (port-forward để truy cập)
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger-query
+  namespace: monitoring
+  labels:
+    app: jaeger
+spec:
+  selector:
+    app: jaeger
+  ports:
+    - name: ui
+      port: 16686
+      targetPort: 16686
+  type: ClusterIP

@@ -1,0 +1,51 @@
+# Helm values cho grafana/loki-stack (Loki + Promtail)
+# Cài: helm install loki grafana/loki-stack \
+#        -f k8s/loki/helm-values.yaml -n monitoring
+
+loki:
+  enabled: true
+  persistence:
+    enabled: false    # tắt persistence cho demo (data mất khi restart)
+  config:
+    schema_config:
+      configs:
+        - from: 2024-01-01
+          store: boltdb-shipper
+          object_store: filesystem
+          schema: v11
+          index:
+            prefix: index_
+            period: 24h
+
+promtail:
+  enabled: true
+  config:
+    # Pipeline xử lý logs từ stdout của containers
+    snippets:
+      pipelineStages:
+        # Stage 1: parse JSON logs (app ghi ra JSON)
+        - json:
+            expressions:
+              timestamp:  timestamp
+              level:      level
+              message:    message
+              service:    service
+              trace_id:   trace_id
+              type:       type
+              status_code: status_code
+              duration_ms: duration_ms
+        # Stage 2: đặt timestamp từ log entry
+        - timestamp:
+            source: timestamp
+            format: RFC3339Nano
+        # Stage 3: gắn labels từ nội dung log
+        - labels:
+            level:
+            service:
+            type:
+        # Stage 4: filter output (chỉ giữ message)
+        - output:
+            source: message
+    # Scrape stdout của tất cả pods trong namespace monitoring
+    clients:
+      - url: http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push

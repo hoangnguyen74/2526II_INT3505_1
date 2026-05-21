@@ -16,6 +16,25 @@ from typing import Optional
 import time, json, logging, os, asyncio, random, uuid
 
 # ══════════════════════════════════════════════
+# 0. OPENTELEMETRY TRACING  (chỉ bật khi có OTEL_EXPORTER_OTLP_ENDPOINT)
+# ══════════════════════════════════════════════
+
+OTLP_ENDPOINT = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "")
+if OTLP_ENDPOINT:
+    try:
+        from opentelemetry import trace
+        from opentelemetry.sdk.trace import TracerProvider
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor
+        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+        _provider = TracerProvider()
+        _provider.add_span_processor(
+            BatchSpanProcessor(OTLPSpanExporter(endpoint=OTLP_ENDPOINT, insecure=True))
+        )
+        trace.set_tracer_provider(_provider)
+    except ImportError:
+        pass  # OTel packages chưa cài — bỏ qua khi chạy local
+
+# ══════════════════════════════════════════════
 # 1. STRUCTURED LOGGING (thay Winston bằng Python)
 # ══════════════════════════════════════════════
 
@@ -218,6 +237,14 @@ app = FastAPI(
 # CORS – cho phép dashboard.html gọi API
 from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+# OTel FastAPI instrumentation (tự động tạo span cho mọi request)
+if OTLP_ENDPOINT:
+    try:
+        from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+        FastAPIInstrumentor.instrument_app(app)
+    except ImportError:
+        pass
 
 
 # ── Middleware: Logging + Metrics + Security Headers ──
