@@ -97,6 +97,12 @@ py -m uvicorn webhook_receiver:app --port 8001
 
 Swagger: http://localhost:8000/docs | Webhook events: http://localhost:8001/events
 
+### Chạy kịch bản demo tự động
+
+```powershell
+PowerShell -ExecutionPolicy Bypass -File demo.ps1
+```
+
 ### Demo CRUD Pattern
 
 ```powershell
@@ -194,6 +200,12 @@ py -m uvicorn main:app --reload
 
 - Swagger: http://localhost:8000/docs  
 - Developer Portal: mở `portal.html` trực tiếp trong trình duyệt
+
+### Chạy kịch bản demo tự động
+
+```powershell
+PowerShell -ExecutionPolicy Bypass -File demo.ps1
+```
 
 ### Demo Developer Experience
 

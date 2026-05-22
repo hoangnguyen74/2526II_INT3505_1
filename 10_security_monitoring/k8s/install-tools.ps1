@@ -49,7 +49,7 @@ if ($currentPath -notlike "*D:\tools*") {
     Write-Host "D:\tools da co trong PATH" -ForegroundColor Yellow
 }
 
-Write-Host "`n✓ Hoan thanh! Mo terminal moi va kiem tra:" -ForegroundColor Green
+Write-Host "`n[OK] Hoan thanh! Mo terminal moi va kiem tra:" -ForegroundColor Green
 Write-Host "  minikube version"
 Write-Host "  kubectl version --client"
 Write-Host "  helm version"
