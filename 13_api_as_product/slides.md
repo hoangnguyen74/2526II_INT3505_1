@@ -1,184 +1,183 @@
-# Buổi 13: API as a Product
+# Buoi 13: API as a Product
 
 ---
 
-## API là gì trong mắt Business?
+## Slide 1: Title + Agenda
 
-> "API is not just a technical interface — it's a **product** that developers consume."
+### Noi dung
 
-| Góc nhìn kỹ thuật | Góc nhìn sản phẩm |
+**Buoi 13: API as a Product**
+
+Muc tieu hom nay:
+1. Hieu goc nhin **Product** khi thiet ke API
+2. Biet cach **kiem tien** tu API (Freemium, Feature Gating)
+3. Do luong thanh cong bang **KPIs** (MRR, Conversion, Error Rate)
+
+Agenda:
+- 5 phut: Kien thuc (4 slides)
+- 10 phut: Live Demo (Sandbox, Quota, Portal)
+- 5 phut: Tong ket + Thao luan
+
+### Speaker Notes
+
+Chao cac ban. Hom nay chung ta se chuyen goc nhin: tu "API la code" sang "API la san pham". Cac buoi truoc da day cach XAY API (FastAPI, patterns, security). Hom nay se day cach BAN no — cho developer khac dung va tra tien.
+
+---
+
+## Slide 2: API khong chi la code — API la san pham
+
+### Noi dung
+
+| Goc nhin ky thuat | Goc nhin san pham |
 |-------------------|-------------------|
 | Endpoint, schema, protocol | Developer experience, onboarding |
 | Uptime, latency | SLA, trust, brand |
 | Rate limiting | Pricing tiers, quota |
 | Logs, errors | KPIs, analytics, churn |
 
-**Ví dụ thực tế**: Stripe, Twilio, Google Maps API — đây là *core business*, không chỉ là infrastructure.
+**Vi du thuc te:**
+- Stripe: $14B doanh thu 2023 — API LA business
+- Twilio: SMS API — $3.8B doanh thu
+- Google Maps API: $10B+ doanh thu
+
+### Speaker Notes
+
+Nhin bang nay: cung 1 thu nhung nhin khac nhau hoan toan. Rate limiting voi ky thuat la "bao ve server", nhung voi business la "pricing tier — tra nhieu hon thi duoc goi nhieu hon". Stripe khong ban phan mem — ho ban API. Va ho kiem $14 ty mot nam.
 
 ---
 
-## Developer Experience (DX)
+## Slide 3: Developer Experience (DX) — Yeu to quyet dinh
 
-### Vì sao DX quan trọng?
+### Noi dung
 
-> **Time-to-first-call** là KPI quan trọng nhất khi ra mắt API.
+> **Time-to-first-call** la KPI quan trong nhat khi ra mat API.
 
-Developer không kiên nhẫn. Nếu mất > 30 phút để chạy được call đầu tiên → họ chuyển sang đối thủ.
+Developer khong kien nhan. Neu mat > 30 phut de chay duoc call dau tien, ho se chuyen sang doi thu.
 
-### Checklist DX tốt
+**Checklist DX tot:**
+- Sandbox: Test khong can dang ky
+- Instant key: Dang ky xong, nhan key ngay, khong can phe duyet
+- Auto docs: Swagger UI tu dong dong bo voi code
+- Consistent errors: Moi loi cung format {error, message, hint}
+- Copy-paste examples: curl, Python, JS san trong docs
+- Quota headers: X-Quota-Remaining trong moi response
 
-- ✅ **Sandbox**: Test không cần đăng ký, không cần credit card
-- ✅ **Instant key**: Đăng ký → nhận key ngay, không approval
-- ✅ **Auto docs**: Swagger UI / OpenAPI luôn đồng bộ với code
-- ✅ **Consistent errors**: Mọi lỗi cùng format `{error, message, hint}`
-- ✅ **Copy-paste examples**: Curl, Python, JS trong docs
-- ✅ **Quota headers**: Client biết còn bao nhiêu quota mà không cần gọi endpoint riêng
+### Speaker Notes
 
----
-
-## Monetization Models
-
-### 1. Freemium
-```
-Free     → Limited quota  → Thu hút developers (acquisition)
-Paid     → More quota     → Convert khi họ cần scale
-```
-**Ví dụ**: Stripe (không có free tier), Mapbox (free 50k/tháng), SendGrid (100 email/ngày)
-
-### 2. Pay-per-call
-```
-0–1,000 calls      → $0
-1,001–100,000      → $0.001/call
-> 100,000          → $0.0005/call (volume discount)
-```
-**Ví dụ**: AWS Lambda, Google Maps API, OpenAI API
-
-### 3. Subscription tiers
-```
-Pro ($29/mo)        → Fixed quota (10,000 calls/ngày)
-Enterprise ($299/mo) → Unlimited + SLA + Support
-```
-**Ví dụ**: GitHub API, Twilio, Datadog
-
-### 4. Feature Gating (không phải quota)
-Không giới hạn số lượng — giới hạn **tính năng**:
-- Free: Basic endpoints
-- Pro: Advanced search, webhooks, bulk operations
-- Enterprise: Custom models, dedicated infrastructure
+Time-to-first-call: tu luc developer NGHE ve API cua ban den khi ho chay duoc 1 request thanh cong. Stripe lam duoc trong 5 phut. Neu cua ban mat 1 ngay, ban thua roi. 6 items trong checklist nay — tat ca deu da implement trong code demo. Sang demo se thay ngay.
 
 ---
 
-## KPIs — Đo lường API as a Product
+## Slide 4: Kiem tien tu API — Freemium + Feature Gating
 
-### Acquisition KPIs
-| KPI | Công thức | Target |
-|-----|-----------|--------|
-| Registered Developers | Σ đăng ký | +20%/tháng |
-| Time-to-first-call | Đăng ký → Call đầu tiên | < 5 phút |
-| Sandbox conversion | Sandbox users → Register | > 30% |
+### Noi dung
 
-### Engagement KPIs
-| KPI | Công thức | Target |
-|-----|-----------|--------|
-| Active Developers | Gọi API trong 30 ngày | > 60% của tổng |
-| API Call Volume | Tổng calls/tháng | +15%/tháng |
-| Error Rate | Errors / Total calls × 100 | < 1% |
+**Mo hinh Freemium:**
 
-### Revenue KPIs
-| KPI | Công thức | Target |
-|-----|-----------|--------|
-| MRR | Σ(users × plan_price) | +10%/tháng |
-| Free→Paid conversion | Paid users / Free users | 3–5% |
-| Churn Rate | Canceled / Total paid | < 3%/tháng |
-| ARPU | MRR / Active users | Tăng theo thời gian |
+| Plan | Gia | Quota | Tinh nang |
+|------|-----|-------|-----------|
+| Free | $0/thang | 100 calls/ngay | CRUD co ban, Sandbox |
+| Pro | $29/thang | 10,000 calls/ngay | + Search, Analytics |
+| Enterprise | $299/thang | Unlimited | + SLA 99.9%, Support |
+
+**2 cach gioi han:**
+- **Quota**: gioi han SO LUONG (Free chi 100 req/ngay)
+- **Feature Gating**: gioi han TINH NANG (Search chi cho Pro+)
+
+### Speaker Notes
+
+Tai sao can Free tier? Day la cua vao — dung de thu hut developer. Ho dung free, thay hay, roi tu nang cap. Conversion rate chi can 2-5% la profitable. Quan trong la phan biet quota voi feature gating. Quota gioi han bao nhieu lan goi. Feature gating gioi han goi duoc cai gi. Demo se thay: Free user goi Search bi 403 — khong phai 429.
 
 ---
 
-## Developer Portal — Thành phần cần có
+## Slide 5: KPIs — Do luong API as a Product
+
+### Noi dung
+
+| Nhom | KPI | Cong thuc | Target |
+|------|-----|-----------|--------|
+| Acquisition | Registered Developers | Tong dang ky | +20%/thang |
+| Acquisition | Time-to-first-call | Dang ky den Call 1 | < 5 phut |
+| Engagement | Active Developers | Goi API trong 30 ngay | > 60% |
+| Engagement | Error Rate | Errors / Total x 100 | < 1% |
+| Revenue | MRR | Sum(users x plan_price) | +10%/thang |
+| Revenue | Free-to-Paid Conversion | Paid / Free users | 3-5% |
+
+### Speaker Notes
+
+6 KPIs chinh. Acquisition do thu hut, Engagement do giữ chan, Revenue do kiem tien. Tat ca deu tinh duoc tu data — va demo se thay admin dashboard co day du cac con so nay. Chu y: MRR la Monthly Recurring Revenue — doanh thu dinh ky hang thang. Day la metric quan trong nhat cua SaaS.
+
+---
+
+## Slide 6: Live Demo
+
+### Noi dung
+
+**Demo A:** Developer Journey (4 phut)
+- Sandbox (khong can key) -> Dang ky -> Goi API -> Feature Gating -> Upgrade
+
+**Demo B:** Admin KPI Dashboard (3 phut)
+- Analytics: MRR, error rate, calls by plan, top endpoints
+
+**Demo C:** Developer Portal (3 phut)
+- portal.html: live stats, pricing, register, usage dashboard
+
+### Speaker Notes
+
+Chuyen sang demo. Mo terminal da chuan bi san. [Chay demo.ps1 hoac goi thu cong]
+
+Demo A la hanh trinh cua developer: tu Sandbox (khong can gi) -> dang ky (nhan key ngay) -> goi API (thay quota headers) -> thu Search (bi chan vi Free) -> upgrade len Pro -> Search thanh cong.
+
+Demo B la goc nhin cua owner: admin dashboard thay duoc MRR, error rate, top endpoints.
+
+Demo C la Developer Portal — UI tron ven ma developer thay khi muon dung API cua ban.
+
+---
+
+## Slide 7: Developer Portal — Thanh phan can co
+
+### Noi dung
 
 ```
 Developer Portal
-├── Landing page     — Value proposition, use cases
-├── Pricing page     — Tier comparison, CTA rõ ràng
-├── Quick start      — Get key trong < 2 phút
-├── Sandbox          — Try trước khi đăng ký
-├── API Reference    — Swagger UI / Redoc tự động
-├── Usage dashboard  — Quota, error rate, history
-├── Changelog        — Breaking changes, deprecations
-└── Support          — Forum / email / Slack by tier
+|-- Landing page     — Value proposition
+|-- Pricing page     — So sanh tier, CTA ro rang
+|-- Quick start      — Lay key trong < 2 phut
+|-- Sandbox          — Thu truoc khi dang ky
+|-- API Reference    — Swagger UI tu dong
+|-- Usage dashboard  — Quota, error rate, history
+|-- Changelog        — Breaking changes
+|-- Support          — Forum / email / Slack by tier
 ```
 
----
+(Da implement day du trong portal.html)
 
-## Sandbox Design
+### Speaker Notes
 
-### Tại sao Sandbox quan trọng?
-
-> Nếu developer phải đăng ký trước khi thử → conversion rate giảm đáng kể.
-
-### Cách implement Sandbox
-
-```python
-@app.get("/sandbox/products")
-def sandbox():
-    return {
-        "sandbox": True,           # Flag rõ ràng
-        "data": DEMO_DATA,         # Data mẫu, không thật
-        "note": "Đây là demo data",
-        "get_real": "POST /register"  # CTA luôn có trong response
-    }
-```
-
-**Best practice**:
-- Sandbox data có prefix `[DEMO]` hoặc `[TEST]`
-- Không lưu data sandbox vào DB thật
-- Sandbox không tốn quota → developer thoải mái explore
-- Có rate limit riêng để ngăn abuse
+Slide nay tuong ung voi portal.html vua demo. Moi phan trong cay nay deu quan trong. Thieu Sandbox thi conversion giam. Thieu Usage dashboard thi developer khong biet con bao nhieu quota. Thieu Changelog thi developer mat tin tuong khi ban thay doi API.
 
 ---
 
-## Launch Strategy
+## Slide 8: Tong ket + Thao luan
 
-### Phase 1 — Private Beta
-- Mời 20–50 developers tin cậy thử nghiệm
-- Thu thập feedback về DX, docs, pricing
-- KPI: Time-to-first-call, error rate
+### Noi dung
 
-### Phase 2 — Public Launch
-- Publish trên GitHub, Dev.to, ProductHunt
-- Free tier không cần credit card
-- KPI: Đăng ký, call volume
-
-### Phase 3 — Monetization
-- Email campaign cho Free users có usage cao
-- A/B test pricing (Pro $19 vs $29 vs $39)
-- KPI: Conversion rate, MRR
-
----
-
-## Phân tích — Stripe API as a Product
-
-| Chiến lược | Chi tiết |
-|------------|----------|
-| **DX** | Dashboard tuyệt vời, docs chi tiết, test mode ngay từ đầu |
-| **Pricing** | Pay-per-transaction (2.9% + $0.30), không subscription |
-| **Sandbox** | Test mode hoàn toàn tách biệt production |
-| **Versioning** | Header `Stripe-Version`, không break existing integrations |
-| **Support** | Community (free), email (paid), Slack (enterprise) |
-| **Webhook** | Delivery retry 3 ngày, signed payload, delivery history |
-
-**Kết quả**: $14B doanh thu 2023, hàng triệu developer dùng.
-
----
-
-## Tổng kết
+**Cong thuc:**
 
 ```
 API as a Product = DX + Monetization + Analytics
-
-DX            →  Time-to-first-call, Sandbox, Docs
-Monetization  →  Freemium, Pay-per-call, Feature gating
-Analytics     →  KPIs: MRR, Conversion, Error rate, Active devs
 ```
 
-> **Quy tắc vàng**: Tối ưu cho developer trước — doanh thu theo sau.
+- **DX**: Time-to-first-call, Sandbox, Instant key, Docs
+- **Monetization**: Freemium, Feature gating, Pricing tiers
+- **Analytics**: KPIs — MRR, Conversion, Error rate, Active devs
+
+> Quy tac vang: **Toi uu cho developer truoc — doanh thu theo sau.**
+
+**Thao luan:** API nhom ban dang lam — ap dung 3 yeu to nay nhu the nao?
+
+**Doc them:** `business_model_canvas.md` — Business Model Canvas day du 9 blocks
+
+### Speaker Notes
+
+Tong ket lai 1 cong thuc don gian: DX + Monetization + Analytics. Stripe thanh cong khong phai vi ho GIOI nhat — ma vi ho DE DUNG nhat. Cau hoi cho lop: "API nhom ban dang lam — neu ban no, ban se chia pricing nhu the nao? Feature nao lock cho plan cao?" Nếu co thoi gian, gioi thieu business_model_canvas.md — tài lieu tham khao ve Business Model Canvas ap dung cho API.
